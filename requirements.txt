@@ -1,3 +1,4 @@
+# Standard GNN and Data Science libraries
 torch>=2.0.0
 torch-geometric>=2.3.0
 pandas>=2.0.0

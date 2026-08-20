@@ -1,4 +1,18 @@
-# Generated dataset binary files
-*.pt
-code/datasets/venv/
-code/datasets/.idea/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment
+.venv/
+venv/
+env/
+
+# Data
+# Exclude raw logs and generated outputs from git
+flaws_cloudtrail_logs/
+output/
+
+# OS specific files
+.DS_Store
+Thumbs.db

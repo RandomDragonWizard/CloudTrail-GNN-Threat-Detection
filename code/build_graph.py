@@ -4,15 +4,34 @@ import numpy as np
 import torch
 from scipy.stats import entropy
 
-# Define target paths in CloudTrail-GNN-Threat-Detection/code/actuall_code
-base_dir = r"C:\Users\Piyush\Desktop\Presidency Documents\SEM_7\CAPSTONE_Proj\CloudTrail-GNN-Threat-Detection\code"
-csv_path = os.path.join(base_dir, "datasets", "user_agent_api_matrix.csv")
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)
 
-if not os.path.exists(csv_path):
-    # fallback to root user_agent_api_matrix.csv
-    csv_path = r"C:\Users\Piyush\Desktop\Presidency Documents\SEM_7\CAPSTONE_Proj\user_agent_api_matrix.csv"
+# Search for CSV in multiple common locations
+possible_csv_paths = [
+    os.path.join(project_root, "output", "user_agent_api_matrix.csv"),
+    os.path.join(project_root, "code", "user_agent_api_matrix.csv"),
+    os.path.join(project_root, "user_agent_api_matrix.csv"),
+    os.path.join(script_dir, "user_agent_api_matrix.csv"),
+    os.path.join(project_root, "datasets", "user_agent_api_matrix.csv"),
+    os.path.join(project_root, "data", "user_agent_api_matrix.csv"),
+]
 
-output_dir = os.path.join(base_dir, "actuall_code")
+csv_path = None
+for path in possible_csv_paths:
+    if os.path.exists(path):
+        csv_path = path
+        break
+
+if csv_path is None:
+    searched = "\n  ".join(possible_csv_paths)
+    raise FileNotFoundError(
+        f"user_agent_api_matrix.csv not found in any expected location.\n"
+        f"Searched:\n  {searched}\n"
+        f"Please ensure the dataset is present in the repository."
+    )
+
+output_dir = os.path.join(project_root, "output")
 os.makedirs(output_dir, exist_ok=True)
 
 print(f"Loading matrix from {csv_path}...")
@@ -39,7 +58,9 @@ max_call = matrix_vals.max(axis=1, keepdims=True)
 ua_features = np.hstack([log_total_calls, out_degree, ent, max_call])
 
 # Compute API profile similarity for K-partite graph edge weights
-norm_matrix = matrix_vals / np.maximum(np.linalg.norm(matrix_vals, axis=1, keepdims=True), 1e-8)
+norm_matrix = matrix_vals / np.maximum(
+    np.linalg.norm(matrix_vals, axis=1, keepdims=True), 1e-8
+)
 
 k = 20
 print(f"Building sparse top-{k} nearest neighbor Agent-Agent graph...")
@@ -63,15 +84,20 @@ for i in range(N_ua):
 edge_indices = np.array([src_list, dst_list], dtype=np.int64)
 edge_weights = np.array(weight_list, dtype=np.float32)
 
-print(f"Constructed graph with {N_ua} nodes and {edge_indices.shape[1]} weighted edges.")
+print(
+    f"Constructed graph with {N_ua} nodes and {edge_indices.shape[1]} weighted edges."
+)
 
 graph_output_pt = os.path.join(output_dir, "ua_graph_data.pt")
-torch.save({
-    'x': torch.tensor(ua_features, dtype=torch.float),
-    'edge_index': torch.tensor(edge_indices, dtype=torch.long),
-    'edge_weight': torch.tensor(edge_weights, dtype=torch.float),
-    'user_agents': user_agents,
-    'api_names': api_names
-}, graph_output_pt)
+torch.save(
+    {
+        "x": torch.tensor(ua_features, dtype=torch.float),
+        "edge_index": torch.tensor(edge_indices, dtype=torch.long),
+        "edge_weight": torch.tensor(edge_weights, dtype=torch.float),
+        "user_agents": user_agents,
+        "api_names": api_names,
+    },
+    graph_output_pt,
+)
 
 print(f"[SUCCESS] Saved graph dataset to: {graph_output_pt}")
