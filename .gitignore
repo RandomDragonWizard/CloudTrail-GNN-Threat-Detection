@@ -1,10 +1,4 @@
-# Python virtual environment
+# Generated dataset binary files
+*.pt
 code/datasets/venv/
-
-# IDE files
-code/datasets/.idea/
-
-# Generated dataset files
-code/datasets/ua_gcn_anomaly_scores.csv
-code/datasets/ua_graph_data.pt
-code/datasets/user_agent_api_matrix.csv
+code/datasets/.idea/
